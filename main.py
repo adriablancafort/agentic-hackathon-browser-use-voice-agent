@@ -1,9 +1,5 @@
-import asyncio
-
-from browseruse import run_task_in_cloud
-
-task = "Go to https://glovoapp.com/ and tell me what are the top 10 pizza restaurants in Barcelona"
-
+from voice_agent import bot
 
 if __name__ == "__main__":
-    asyncio.run(run_task_in_cloud(task))
+    from pipecat.runner.run import main
+    main()

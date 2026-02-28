@@ -1,4 +1,5 @@
 import os
+
 from dotenv import load_dotenv
 from pipecat.audio.vad.silero import SileroVADAnalyzer
 from pipecat.frames.frames import LLMRunFrame
@@ -16,6 +17,8 @@ from pipecat.services.cartesia.tts import CartesiaTTSService
 from pipecat.services.deepgram.stt import DeepgramSTTService
 from pipecat.services.openai.llm import OpenAILLMService
 from pipecat.transports.base_transport import BaseTransport, TransportParams
+
+from tools import get_tools_functions, get_tools_schema
 
 
 load_dotenv(override=True)
@@ -38,14 +41,21 @@ async def agent(transport: BaseTransport, runner_args: RunnerArguments):
         model="gpt-4.1",
     )
 
+    tools_schema = get_tools_schema()
+
     messages = [
         {
             "role": "system",
-            "content": "You are a friendly AI assistant. Respond naturally and keep your answers conversational.",
+            "content": (
+                "You are a friendly voice assistant that helps users complete tasks in web browsers."
+                "Keep responses short and conversational."
+                "When the user asks you to do something in the browser, call start_browser_task with a clear, detailed task description."
+                "If details are missing (e.g. restaurant name, address), ask a brief clarifying question first."
+            ),
         },
     ]
 
-    context = LLMContext(messages)
+    context = LLMContext(messages, tools=tools_schema)
     user_aggregator, assistant_aggregator = LLMContextAggregatorPair(
         context,
         user_params=LLMUserAggregatorParams(vad_analyzer=SileroVADAnalyzer()),
@@ -68,9 +78,17 @@ async def agent(transport: BaseTransport, runner_args: RunnerArguments):
         params=PipelineParams(),
     )
 
+    for tool in get_tools_functions():
+        llm.register_direct_function(tool)
+
     @transport.event_handler("on_client_connected")
     async def on_client_connected(transport, client):
-        messages.append({"role": "system", "content": "Say hello and briefly introduce yourself."})
+        messages.append(
+            {
+                "role": "system",
+                "content": "Say hello and briefly explain you can help the user do things in the browser, like ordering food.",
+            }
+        )
         await task.queue_frames([LLMRunFrame()])
 
     @transport.event_handler("on_client_disconnected")
