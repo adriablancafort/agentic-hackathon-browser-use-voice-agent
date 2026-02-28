@@ -1,16 +1,9 @@
 import asyncio
 
-from browser_use import Agent, ChatBrowserUse
-from dotenv import load_dotenv
+from browseruse import run_task_in_cloud
 
-
-async def main() -> None:
-    load_dotenv()
-    llm = ChatBrowserUse()
-    task = "Find the number 1 post on Show HN"
-    agent = Agent(task=task, llm=llm)
-    await agent.run()
+task = "Go to https://glovoapp.com/ and tell me what are the top 10 pizza restaurants in Barcelona"
 
 
 if __name__ == "__main__":
-    asyncio.run(main())
+    asyncio.run(run_task_in_cloud(task))
