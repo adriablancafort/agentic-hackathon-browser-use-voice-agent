@@ -2,7 +2,7 @@ import os
 
 from dotenv import load_dotenv
 from pipecat.audio.vad.silero import SileroVADAnalyzer
-from pipecat.frames.frames import LLMRunFrame
+from pipecat.frames.frames import LLMMessagesAppendFrame, LLMRunFrame
 from pipecat.pipeline.pipeline import Pipeline
 from pipecat.pipeline.runner import PipelineRunner
 from pipecat.pipeline.task import PipelineParams, PipelineTask
@@ -42,6 +42,21 @@ async def agent(transport: BaseTransport, runner_args: RunnerArguments):
         model="gpt-4.1",
     )
 
+    async def append_message(message: str):
+        await task.queue_frames(
+            [
+                LLMMessagesAppendFrame(
+                    [
+                        {
+                            "role": "system",
+                            "content": message,
+                        }
+                    ],
+                    run_llm=False,
+                )
+            ]
+        )
+
     tools_schema = get_tools_schema()
 
     messages = [
@@ -74,7 +89,7 @@ async def agent(transport: BaseTransport, runner_args: RunnerArguments):
         params=PipelineParams(),
     )
 
-    for tool in get_tools_functions():
+    for tool in get_tools_functions(append_message=append_message):
         llm.register_direct_function(tool)
 
     @transport.event_handler("on_client_connected")
