@@ -18,7 +18,8 @@ from pipecat.services.deepgram.stt import DeepgramSTTService
 from pipecat.services.openai.llm import OpenAILLMService
 from pipecat.transports.base_transport import BaseTransport, TransportParams
 
-from tools import get_tools_functions, get_tools_schema
+from agent.prompts import AGENT_PROMPT, INITIAL_PROMPT
+from agent.tools import get_tools_functions, get_tools_schema
 
 
 load_dotenv(override=True)
@@ -46,12 +47,7 @@ async def agent(transport: BaseTransport, runner_args: RunnerArguments):
     messages = [
         {
             "role": "system",
-            "content": (
-                "You are a friendly voice assistant that helps users complete tasks in web browsers."
-                "Keep responses short and conversational."
-                "When the user asks you to do something in the browser, call start_browser_task with a clear, detailed task description."
-                "If details are missing (e.g. restaurant name, address), ask a brief clarifying question first."
-            ),
+            "content": AGENT_PROMPT,
         },
     ]
 
@@ -86,7 +82,7 @@ async def agent(transport: BaseTransport, runner_args: RunnerArguments):
         messages.append(
             {
                 "role": "system",
-                "content": "Say hello and briefly explain you can help the user do things in the browser, like ordering food.",
+                "content": INITIAL_PROMPT,
             }
         )
         await task.queue_frames([LLMRunFrame()])
