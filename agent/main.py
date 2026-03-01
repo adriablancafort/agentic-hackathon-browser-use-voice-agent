@@ -7,10 +7,7 @@ from pipecat.pipeline.pipeline import Pipeline
 from pipecat.pipeline.runner import PipelineRunner
 from pipecat.pipeline.task import PipelineParams, PipelineTask
 from pipecat.processors.aggregators.llm_context import LLMContext
-from pipecat.processors.aggregators.llm_response_universal import (
-    LLMContextAggregatorPair,
-    LLMUserAggregatorParams,
-)
+from pipecat.processors.aggregators.llm_response_universal import LLMContextAggregatorPair, LLMUserAggregatorParams
 from pipecat.runner.types import RunnerArguments
 from pipecat.runner.utils import create_transport
 from pipecat.services.cartesia.tts import CartesiaTTSService
@@ -42,7 +39,7 @@ async def agent(transport: BaseTransport, runner_args: RunnerArguments):
         model="gpt-4.1",
     )
 
-    async def append_message(message: str):
+    async def append_message(message: str, run_llm: bool = False):
         await task.queue_frames(
             [
                 LLMMessagesAppendFrame(
@@ -52,7 +49,7 @@ async def agent(transport: BaseTransport, runner_args: RunnerArguments):
                             "content": message,
                         }
                     ],
-                    run_llm=True,
+                    run_llm=run_llm,
                 )
             ]
         )

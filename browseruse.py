@@ -20,21 +20,32 @@ def get_sandbox_kwargs():
 	}
 
 
-async def run_task_in_cloud(task, on_log=None):
+async def run_task_in_cloud(task, append_message=None):
 	@sandbox(**get_sandbox_kwargs())
-	async def run_task(browser: Browser) -> None:
+	async def run_task(browser: Browser):
 		llm = ChatBrowserUse()
 		agent = Agent(task=task, browser=browser, llm=llm)
 		await agent.run()
 
+	def browserbase_update(message: str, run_llm: bool):
+		if append_message:
+			loop = asyncio.get_running_loop()
+			loop.create_task(append_message(message, run_llm=run_llm))
+
+	expect_final_result = False
 	original_print = builtins.print
 
 	def intercept_print(*args, **kwargs):
+		nonlocal expect_final_result
 		message = " ".join(str(a) for a in args).strip()
-		if on_log and "🧠 Memory: " in message:
+		if "🧠 Memory: " in message:
 			cleaned = message.split("🧠 Memory: ", 1)[1]
-			loop = asyncio.get_running_loop()
-			loop.create_task(on_log(cleaned))
+			browserbase_update(cleaned, run_llm=True)
+		elif expect_final_result:
+			browserbase_update(message, run_llm=True)
+			expect_final_result = False
+		elif "Final Result:" in message:
+			expect_final_result = True
 		original_print(*args, **kwargs)
 
 	builtins.print = intercept_print

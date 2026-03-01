@@ -12,11 +12,11 @@ def get_tools_functions(append_message=None):
         Args:
             task: Detailed description of the browser task to execute.
         """
-        asyncio.create_task(run_task_in_cloud(task, on_log=append_message))
+        asyncio.create_task(run_task_in_cloud(task, append_message=append_message))
         await params.result_callback("Browser task started.")
 
     return [start_browser_task]
 
 
-def get_tools_schema() -> ToolsSchema:
+def get_tools_schema():
     return ToolsSchema(standard_tools=get_tools_functions())
