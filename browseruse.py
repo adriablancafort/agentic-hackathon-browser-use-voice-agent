@@ -20,14 +20,6 @@ def get_sandbox_kwargs():
 	}
 
 
-def schedule_callback(callback, message):
-	try:
-		loop = asyncio.get_running_loop()
-		loop.create_task(callback(message))
-	except:
-		pass
-
-
 async def run_task_in_cloud(task, on_log=None):
 	@sandbox(**get_sandbox_kwargs())
 	async def run_task(browser: Browser) -> None:
@@ -39,8 +31,10 @@ async def run_task_in_cloud(task, on_log=None):
 
 	def intercept_print(*args, **kwargs):
 		message = " ".join(str(a) for a in args).strip()
-		if on_log and message:
-			schedule_callback(on_log, message)
+		if on_log and "🧠 Memory: " in message:
+			cleaned = message.split("🧠 Memory: ", 1)[1]
+			loop = asyncio.get_running_loop()
+			loop.create_task(on_log(cleaned))
 		original_print(*args, **kwargs)
 
 	builtins.print = intercept_print

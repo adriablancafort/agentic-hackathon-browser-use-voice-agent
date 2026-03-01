@@ -52,7 +52,7 @@ async def agent(transport: BaseTransport, runner_args: RunnerArguments):
                             "content": message,
                         }
                     ],
-                    run_llm=False,
+                    run_llm=True,
                 )
             ]
         )
